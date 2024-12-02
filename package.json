@@ -1,0 +1,14 @@
+{
+  "name": "adventofcode1",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "typescript": "^5.5.3"
+  },
+  "private": true
+}
