@@ -20,35 +20,23 @@ function readFileIntoArrays(filePath: string): [number[], number[]] {
 }
 
 // Getting distance
-function gettingDistance(number1: number[], number2: number[]): number {
-    const sorted1 = numbers1.sort((a, b) => a - b);
-    const sorted2 = numbers2.sort((a, b) => a - b);
+function gettingDistance(numbers1: number[], numbers2: number[]): number {
+    numbers1.sort((a, b) => a - b);
+    numbers2.sort((a, b) => a - b);
 
-    let totalDistance = 0;
-    for (var i = 0; i < sorted1.length; i++) {
-        totalDistance += sorted1[i] - sorted2[i] > 0 ? sorted1[i] - sorted2[i] : sorted2[i] - sorted1[i];
+    if (numbers1.length !== numbers2.length) {  // Add length check
+        throw new Error("Arrays must have the same length for distance calculation.");
     }
-    return totalDistance;
+
+    return numbers1.reduce((total, num1, i) => total + Math.abs(num1 - numbers2[i]), 0);
 }
 
 // Getting similarity
-function gettingSimilarity(number1: number[], number2: number[]): number {
-    // const map1 = new Map<number, number>();
-    const map2 = new Map<number, number>();
+function gettingSimilarity(numbers1: number[], numbers2: number[]): number {
+    const num2Counts = new Map<number, number>();
+    numbers2.forEach(num => num2Counts.set(num, (num2Counts.get(num) || 0) + 1));
 
-    for (var i = 0; i < number1.length; i++) {
-        // map1.set(number1[i], (map1.get(number1[i]) || 0) + 1);
-        map2.set(number2[i], (map2.get(number2[i]) || 0) + 1);
-    }
-
-    let similarity = 0;
-
-    number1.forEach(number => {
-        console.log(number + " " + number * (map2.get(number) || 0));
-        similarity += number * (map2.get(number) || 0);
-    })
-
-    return similarity;
+    return numbers1.reduce((similarity, num1) => similarity + num1 * (num2Counts.get(num1) || 0), 0);
 }
 
 
