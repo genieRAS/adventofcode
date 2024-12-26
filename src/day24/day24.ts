@@ -1,4 +1,5 @@
 import * as fs from "fs";
+import { isProxy } from "node:util/types";
 
 // const filePath = "input-sample.txt"; //2024,
 const filePath = "input.txt"; //
@@ -104,3 +105,151 @@ for (let i = 0; i < binary.length; i++) {
   );
 }
 console.log(result);
+
+let resultOutputs: string[] = [];
+
+function aFullyAdditionGates(index: number, cin: string | undefined): string {
+  let indexStr = index.toString().padStart(2, "0");
+  let x = "x" + indexStr;
+  let y = "y" + indexStr;
+  let z = "z" + indexStr;
+
+  let xorConnection = allConnections.find((connection) => {
+    let inputSet = new Set(connection.input);
+    return inputSet.has(x) && inputSet.has(y) && connection.operation === "XOR";
+  });
+
+  if (xorConnection === undefined) {
+    console.log(indexStr);
+  }
+  let xy = xorConnection?.output!;
+
+  if (cin === undefined) {
+    if (xy != z) {
+      console.log(x + "|" + y);
+    }
+
+    let andConnection = allConnections.find((connection) => {
+      let inputSet = new Set(connection.input);
+      return (
+        inputSet.has(x) && inputSet.has(y) && connection.operation === "AND"
+      );
+    });
+
+    return andConnection!.output;
+  } else {
+    let xor2Connection = allConnections.find((connection) => {
+      let inputSet = new Set(connection.input);
+      return (
+        inputSet.has(xy) && inputSet.has(cin) && connection.operation === "XOR"
+      );
+    });
+
+    if (xor2Connection === undefined) {
+      console.log(xy + "|" + cin);
+
+      let expectedXor2Connection = allConnections.find((connection) => {
+        let inputSet = new Set(connection.input);
+        return inputSet.has(cin) && connection.operation === "XOR";
+      })!;
+
+      expectedXor2Connection.input.forEach((input) => {
+        if (input != cin) {
+          let xor2Input = input.slice(0, input.length);
+
+          //Now find a connection has output is xor2Input
+          let swappedXorConnection = allConnections.find((connection) => {
+            return connection.output === xor2Input;
+          })!;
+
+          console.log(swappedXorConnection);
+
+          let tmp = swappedXorConnection.output.slice(
+            0,
+            swappedXorConnection.output.length,
+          );
+          swappedXorConnection.output = xorConnection!.output.slice(
+            0,
+            xorConnection!.output.length,
+          );
+          xorConnection!.output = tmp;
+          xy = tmp;
+
+          // add result
+          resultOutputs.push(xorConnection!.output);
+          resultOutputs.push(swappedXorConnection.output);
+        }
+      });
+
+      xor2Connection = allConnections.find((connection) => {
+        let inputSet = new Set(connection.input);
+        return (
+          inputSet.has(xy) &&
+          inputSet.has(cin) &&
+          connection.operation === "XOR"
+        );
+      })!;
+    }
+
+    if (xor2Connection.output != z) {
+      console.log(xy + "|" + cin);
+
+      let expectedCon = allConnections.find((connection) => {
+        return connection.output == z;
+      })!;
+      console.log(expectedCon.input[0] + "|" + expectedCon.input[1]);
+
+      expectedCon.output = xor2Connection.output;
+      xor2Connection.output = z;
+
+      // add result
+      resultOutputs.push(expectedCon.output);
+      resultOutputs.push(xor2Connection.output);
+    }
+
+    let andConnection = allConnections.find((connection) => {
+      let inputSet = new Set(connection.input);
+      return (
+        inputSet.has(x) && inputSet.has(y) && connection.operation === "AND"
+      );
+    });
+
+    let cout1 = andConnection!.output;
+
+    let and2Connection = allConnections.find((connection) => {
+      let inputSet = new Set(connection.input);
+      return (
+        inputSet.has(xy) && inputSet.has(cin) && connection.operation === "AND"
+      );
+    });
+    let cout2 = and2Connection!.output;
+
+    let orConnection = allConnections.find((connection) => {
+      let inputSet = new Set(connection.input);
+      return (
+        inputSet.has(cout1) &&
+        inputSet.has(cout2) &&
+        connection.operation === "OR"
+      );
+    });
+
+    if (orConnection === undefined) {
+      console.log(cout1 + "|" + cout2);
+    }
+
+    return orConnection!.output;
+  }
+}
+
+let carry: string | undefined = undefined;
+for (let i = 0; i < 44; i++) {
+  carry = aFullyAdditionGates(i, carry);
+}
+
+// xorConnection:  x XOR y -> xy
+// xor2Connection: xy XOR cin -> z
+// andConnection: x AND y -> cout1
+// and2Connection:  xy AND cin -> cout2
+// orConnection: cout1 OR cout2 -> cout
+//
+console.log(resultOutputs.sort((a, b) => a.localeCompare(b)).join(","));
